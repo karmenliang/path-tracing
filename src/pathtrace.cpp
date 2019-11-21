@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include <vec3.h>
-#include <ray.h>
+#include "ray.h"
 
 // CUDA libraries
 // #include <cuda_runtime.h>
