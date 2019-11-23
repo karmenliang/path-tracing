@@ -1,7 +1,7 @@
-#ifndef CAMERAH
-#define CAMERAH
+#ifndef CAMERA_H
+#define CAMERA_H
 
-#include "ray.h"
+#include "geometry/ray.h"
 
 class camera {
     public:

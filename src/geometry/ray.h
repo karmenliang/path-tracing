@@ -1,16 +1,14 @@
-#ifndef RAYH
-#define RAYH
-#include "vec3.h"
+#ifndef RAY_H
+#define RAY_H
+#include "../vec3.h"
 
 class ray
 {
     public:
         ray() {}
-
-        // A: ray origin
-        // B: ray direction
-        vec3 A;
-        vec3 B;
+	
+        vec3 A; // ray origin
+        vec3 B; // ray direction
 
         ray(const vec3& a, const vec3& b) { 
             A = a;
@@ -21,7 +19,7 @@ class ray
 
         vec3 direction() const { return B; }
 
-        // t: value that changes destination along ray
+        // t: value that changes 'destination' along ray
         vec3 point_at_parameter(float t) const {
             return A + t*B;
         }

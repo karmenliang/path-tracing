@@ -1,5 +1,5 @@
-#ifndef HITTABLEH
-#define HITTABLEH
+#ifndef SURFACE_H
+#define SURFACE_H
 
 #include "ray.h"
 

@@ -1,8 +1,8 @@
 #include <iostream>
 #include <float.h>
 
-#include "surface_list.h"
-#include "sphere.h"
+#include "geometry/surface_list.h"
+#include "geometry/sphere.h"
 #include "material.h"
 #include "camera.h"
 

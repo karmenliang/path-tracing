@@ -3,4 +3,4 @@ path: pathtrace.cpp
 
 clean:
 	@rm -rf *.o *~ pathtrace
-	@echo Made clean
+	@echo Made clean.
