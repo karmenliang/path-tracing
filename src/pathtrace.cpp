@@ -26,16 +26,21 @@ vec3 color(const ray& r, surface *world, int depth) {
     }
 }
 
+// Generate a random scene with 50 spheres
 surface *random_scene() {
     int n = 50;
     surface **list = new surface*[n+1];
     list[0] =  new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
     int i = 1;
+
     for (int a = -3; a < 4; a++) {
         for (int b = -3; b < 4; b++) {
+
             float choose_mat = random_double();
             vec3 center(a+0.9*random_double(),0.2,b+0.9*random_double());
+
             if ((center-vec3(4,0.2,0)).length() > 0.9) {
+
                 if (choose_mat < 0.5) {  // diffuse
                     list[i++] = new sphere(center, 0.2,
                         new matte(vec3(random_double()*random_double(),
@@ -44,6 +49,7 @@ surface *random_scene() {
                         )
                     );
                 }
+
                 else { // metal
                     list[i++] = new sphere(center, 0.2,
                             new metal(vec3(0.5*(1 + random_double()),
@@ -51,7 +57,7 @@ surface *random_scene() {
                                            0.5*(1 + random_double())),
                                       0.5*random_double()));
                 }
-	    }
+	        }
         }
     }
 
@@ -61,7 +67,6 @@ surface *random_scene() {
     return new surface_list(list,i);
 }
 
-// Slowly building up pieces of the path tracer
 int main() {
     int nx = 600;
     int ny = 300;
@@ -88,9 +93,9 @@ int main() {
                 float v = float(j + random_double()) / float(ny);
                 ray r = cam.get_ray(u, v);
                 col += color(r, world, 0);
-            }
+        }
 	    
-            col /= float(ns);
+        col /= float(ns);
 	    col = vec3( sqrt(col[0]), sqrt(col[1]), sqrt(col[2]) );
 
             int ir = int(255.99*col[0]);
