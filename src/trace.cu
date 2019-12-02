@@ -13,6 +13,16 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+__device__ bool hit_sphere(const vec3& center, float radius, const ray& r) {
+  vec3 oc = r.origin() - center;
+  float a = dot(r.direction(), r.direction());
+  float b = 2.0f * dot(oc, r.direction());
+  float c = dot(oc, oc) - radius*radius;
+  float discriminant = b*b - 4.0f*a*c;
+
+  return (discriminant > 0.0f);
+}
+
 __device__ vec3 color(const ray& r) {
   vec3 unit_direction = unit_vector(r.direction());
   float t = 0.5f*(unit_direction.y() + 1.0f);
