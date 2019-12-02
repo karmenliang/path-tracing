@@ -5,7 +5,7 @@
 #include "geometry/sphere.h"
 #include "material.h"
 #include "camera.h"
-#include "util.h"
+#include "jpeg.h"
 
 // Simple gradient background scene
 vec3 color(const ray& r, surface *world, int depth) {

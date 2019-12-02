@@ -1,5 +1,5 @@
 #ifndef SURFACELIST_H
-#def SURFACELIST_H
+#define SURFACELIST_H
 
 #include "surface.h"
 

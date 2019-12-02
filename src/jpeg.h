@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "jpeglib.h"
 
 /* 
@@ -102,7 +104,7 @@ frame_ptr allocate_frame(int height, int width, int num_components) {
   row_stride = width * num_components;
   
   /* Basic struct and information */
-  if ((p_info = malloc(sizeof(frame_struct_t))) == NULL) {
+  if ((p_info = (frame_struct_t*) malloc(sizeof(frame_struct_t))) == NULL) {
     fprintf(stderr, "ERROR: Memory allocation failure\n");
     exit(1);
   }
@@ -111,11 +113,11 @@ frame_ptr allocate_frame(int height, int width, int num_components) {
   p_info->num_components = num_components;
 
   /* Image array and pointers to rows */
-  if ((p_info->row_pointers = malloc(sizeof(JSAMPLE *) * height)) == NULL) {
+  if ((p_info->row_pointers = (JSAMPLE**) malloc(sizeof(JSAMPLE *) * height)) == NULL) {
     fprintf(stderr, "ERROR: Memory allocation failure\n");
     exit(1);
   }
-  if ((p_info->image_buffer = malloc(sizeof(JSAMPLE) * row_stride * height)) == NULL) {
+  if ((p_info->image_buffer = (JSAMPLE*) malloc(sizeof(JSAMPLE) * row_stride * height)) == NULL) {
     fprintf(stderr, "ERROR: Memory allocation failure\n");
     exit(1);
   }
