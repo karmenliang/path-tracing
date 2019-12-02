@@ -275,7 +275,7 @@ endif
 # Target rules
 all: build
 
-build: trace-seq trace-cuda
+build: trace-cuda
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -292,24 +292,14 @@ trace-cuda: trace-cuda.o
 	$(EXEC) mkdir -p ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	$(EXEC) cp $@ ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
-trace-seq: trace.cpp
-	g++ -Wall -g -o trace-seq trace.cpp $(LIBRARIES)
-
-# Run sequential version
-out-seq.ppm: trace-seq
-	@rm -f out-seq.ppm
-	./trace-seq > out-seq.ppm
-
-# Write out to a jpg file
-out-seq.jpg: out-seq.ppm
-	@rm -f out-seq.jpg
-	ppmtojpeg out-seq.ppm > out-seq.jpg
-
+# Run parallel path tracer and output to a jpg file
 run: build
-	$(EXEC) ./trace
+	$(EXEC) ./trace > out-cuda.ppm
+	@ppmtojpeg out-cuda.ppm > out-cuda.jpg
+	@echo Wrote to out-cuda.jpg
 
 clean:
-	@rm -f trace-seq trace-cuda *.o *~
+	@rm -f trace-cuda *.o *~
 	@rm -rf ../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/trace-cuda
 	@echo Made clean.
 
