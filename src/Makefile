@@ -242,7 +242,7 @@ ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I../../common/inc
+INCLUDES  := -I./common/inc
 LIBRARIES := -ljpeg
 
 ################################################################################
@@ -296,14 +296,14 @@ trace-seq: trace.cpp
 	g++ -Wall -g -o trace-seq trace.cpp $(LIBRARIES)
 
 # Run sequential version
-out.ppm: trace-seq
-	@rm -f out.ppm
-	./trace-seq > out.ppm
+out-seq.ppm: trace-seq
+	@rm -f out-seq.ppm
+	./trace-seq > out-seq.ppm
 
 # Write out to a jpg file
-out.jpg: out.ppm
-	@rm -f out.jpg
-	ppmtojpeg out.ppm > out.jpg
+out-seq.jpg: out-seq.ppm
+	@rm -f out-seq.jpg
+	ppmtojpeg out-seq.ppm > out-seq.jpg
 
 run: build
 	$(EXEC) ./trace
