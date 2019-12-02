@@ -295,6 +295,16 @@ trace-cuda: trace-cuda.o
 trace-seq: trace.cpp
 	g++ -Wall -g -o trace-seq trace.cpp $(LIBRARIES)
 
+# Run sequential version
+out.ppm: trace-seq
+	@rm -f out.ppm
+	./trace-seq > out.ppm
+
+# Write out to a jpg file
+out.jpg: out.ppm
+	@rm -f out.jpg
+	ppmtojpeg out.ppm > out.jpg
+
 run: build
 	$(EXEC) ./trace
 
