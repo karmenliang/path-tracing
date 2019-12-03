@@ -11,12 +11,17 @@
 #include "camera.h"
 #include "jpeg.h"
 
-// Simple gradient background scene
+/*
+ * Determine the color of a point by backward tracing
+ */
 vec3 color(const ray& r, surface *world, int depth) {
   hit_record rec;
+  
   if (world->hit(r, 0.001, FLT_MAX, rec)) {
+
     ray scattered;
     vec3 attenuation;
+
     if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
       return attenuation*color(scattered, world, depth+1);
     }else {
@@ -24,6 +29,7 @@ vec3 color(const ray& r, surface *world, int depth) {
     }
     
   }else {
+
     vec3 unit_dir = unit_vector(r.direction());
     float t = 0.5*(unit_dir.y() + 1.0);
     
@@ -31,9 +37,11 @@ vec3 color(const ray& r, surface *world, int depth) {
   }
 }
 
-// Generate a random scene with 50 spheres
-surface *random_scene() {
-  int n = 50;
+/*
+ * Generate a random scene with n spheres
+ */
+surface *random_scene(int n) {
+
   surface **list = new surface*[n+1];
   list[0] =  new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
   int i = 1;
@@ -79,10 +87,12 @@ int main() {
   std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
   camera cam(vec3(6,1,3), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
-  surface *world = random_scene();
+  surface *world = random_scene(50);
 
   for (int j = ny-1; j >= 0; j--) {
+
     for (int i = 0; i < nx; i++) {
+
       vec3 col(0, 0, 0);
 
       // Anti-aliasing
