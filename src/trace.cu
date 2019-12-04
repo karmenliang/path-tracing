@@ -8,11 +8,13 @@
 // CUDA libraries
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
+#include <curand_kernel.h>
 
 #include "vec3.h"
 #include "ray.h"
 #include "sphere.h"
 #include "surface_list.h"
+#include "camera.h"
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -31,10 +33,25 @@ __device__ vec3 color(const ray& r, surface **world) {
 }
 
 /*
+ * CUDA kernel: initialize rand_state, separated from 
+ * actual rendering for performance measurement
+ */
+__global__ void render_init(int max_x, int max_y, curandState *rand_state) {
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  int j = threadIdx.y + blockIdx.y * blockDim.y;
+  if((i >= max_x) || (j >= max_y)) return;
+  int pixel_index = j*max_x + i;
+
+  // Each thread gets same seed, a different sequence number, no offset
+  curand_init(1984, pixel_index, 0, &rand_state[pixel_index]);
+}
+
+
+/*
  * CUDA kernel function
  */
-__global__ void render(vec3 *fb, int max_x, int max_y, vec3 lower_left,
-		       vec3 horizontal, vec3 vertical, vec3 origin, surface **world) {
+__global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
+		       surface **world, curandState *rand_state) {
 
   int i = threadIdx.x + blockIdx.x * blockDim.x;
   int j = threadIdx.y + blockIdx.y * blockDim.y;
@@ -43,31 +60,42 @@ __global__ void render(vec3 *fb, int max_x, int max_y, vec3 lower_left,
   if((i >= max_x) || (j >= max_y)) return;
 
   int pixel_index = j*max_x + i;
-  float u = float(i) / float(max_x);
-  float v = float(j) / float(max_y);
+  vec3 col(0, 0, 0);
+  
+  // Local copy of random state
+  curandState local_rand_state = rand_state[pixel_index];
+  
+  for (int s = 0; s < ns; s++){
+    float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
+    float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
 
-  ray r(origin, lower_left + u*horizontal + v*vertical);
-  fb[pixel_index] = color(r, world);
+    ray r = (*cam)->get_ray(u,v);
+    col += color(r, world);
+  }
+  
+  fb[pixel_index] = col/float(ns);
 }
 
 /*
  * CUDA kernel: construct scene's objects
  */
-__global__ void create_world(surface **d_list, surface **d_world) {
+__global__ void create_world(surface **d_list, surface **d_world, camera **d_camera) {
   if (threadIdx.x == 0 && blockIdx.x == 0) {
     *(d_list)   = new sphere(vec3(0,0,-1), 0.5);
     *(d_list+1) = new sphere(vec3(0,-100.5,-1), 100);
     *d_world    = new hitable_list(d_list,2);
+    *d_camera   = new camera();
   }
 }
 
 /*
  * CUDA kernel: deallocate scene's objects
  */
-__global__ void free_world(surface **d_list, surface **d_world) {
+__global__ void free_world(surface **d_list, surface **d_world, camera **d_camera) {
   delete *(d_list);
   delete *(d_list+1);
   delete *d_world;
+  delete *d_camera;
 }
 
 /********************* MAIN ******************************************************/
@@ -78,24 +106,33 @@ int main() {
   int ny = 600;  // image height
   int tx = 8;    // block width
   int ty = 8;    // block height
-
+  int ns = 100;  // number of samples
+  
   int num_pixels = nx*ny;
   size_t fb_size = num_pixels*sizeof(vec3);
   
   std::cerr << "--------------------------------------------------------------\n\n";
-  std::cerr << "Rendering a " << nx << "x" << ny << " image ";
-  std::cerr << "in " << tx << "x" << ty << " blocks.\n";
+  std::cerr << "Rendering a " << nx << "x" << ny << " image with"
+	    << ns << "samples per pixel. \n";
+  std::cerr << tx << "x" << ty << " blocks.\n";
 
   // Allocate unified memory for frame buffer
   vec3 *fb;
   checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
-  // Construct world of objects
+  // Allocate random state
+  curandState *d_rand_state;
+  checkCudaErrors(cudaMalloc((void **)&d_rand_state, num_pixels*sizeof(curandState)));
+  
+  // Allocate world of objects and the camera
   surface **d_list;
   checkCudaErrors(cudaMalloc((void **)&d_list, 2*sizeof(surface *)));
   surface **d_world;
   checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(surface *)));
-  create_world<<<1,1>>>(d_list,d_world);
+  camera **d_camera;
+  checkCudaErrors(cudaMalloc((void **)&d_camera, sizeof(camera *)));
+  create_world<<<1,1>>>(d_list, d_world, d_camera);
+
   checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaDeviceSynchronize());
   
@@ -108,15 +145,12 @@ int main() {
   dim3 dimGrid(nx/tx+1,ny/ty+1);
   dim3 dimBlock(tx,ty);
 
+  render_init<<<dimGrid, dimBlock>>>(nx, ny, d_rand_state);
+  
   checkCudaErrors(cudaEventRecord(start));
   
   // Kernel invocation
-  render<<<dimGrid, dimBlock>>>(fb, nx, ny,
-				vec3(-2.0, -1.0, -1.0), // lower left corner
-				vec3(4.0, 0.0, 0.0),    // horizontal
-				vec3(0.0, 2.0, 0.0),    // vertical
-				vec3(0.0, 0.0, 0.0),    // origin
-				d_world);
+  render<<<dimGrid, dimBlock>>>(fb, nx, ny, ns, d_camera, d_world, d_rand_state);
 
   checkCudaErrors(cudaGetLastError());
 
@@ -149,9 +183,12 @@ int main() {
 
   // CUDA clean-up
   checkCudaErrors(cudaDeviceSynchronize());
-  free_world<<<1, 1>>>(d_list,d_world);
+  free_world<<<1, 1>>>(d_list,d_world, d_camera);
   checkCudaErrors(cudaGetLastError());
   checkCudaErrors(cudaFree(d_list));
   checkCudaErrors(cudaFree(d_world));
+  checkCudaErrors(cudaFree(d_camera));
+  checkCudaErrors(cudaFree(d_rand_state));
   checkCudaErrors(cudaFree(fb));
+  
 }
