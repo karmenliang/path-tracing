@@ -5,10 +5,8 @@
 
 class material;
 
-/*
- * Args for material to determine how
- * rays interact with the surface
- */
+// Args for material to determine how
+// rays interact with the surface
 struct hit_record {
   float t;
   vec3 p;
