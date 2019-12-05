@@ -3,7 +3,7 @@
 
 #include "surface.h"
 
-class sphere: public surface  {
+class sphere: public hittable  {
  public:
 
   __device__ sphere() {}

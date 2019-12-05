@@ -11,9 +11,9 @@ struct hit_record {
   vec3 normal;
 };
 
-class surface  {
+class hittable  {
  public:
-  virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const = 0;
+  __device__ virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const = 0;
 };
 
 

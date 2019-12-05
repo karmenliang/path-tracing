@@ -7,15 +7,15 @@
 
 #include "surface.h"
 
-class surface_list: public surface  {
+class surface_list: public hittable  {
  public:
   __device__ surface_list() {}
 
-  __device__ surface_list(surface **l, int n) {list = l; list_size = n; }
+  __device__ surface_list(hittable **l, int n) {list = l; list_size = n; }
 
   __device__ virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
 
-  surface **list;
+  hittable **list;
 
   int list_size;
 };

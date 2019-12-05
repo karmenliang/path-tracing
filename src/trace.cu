@@ -18,7 +18,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-__device__ vec3 color(const ray& r, surface **world) {
+__device__ vec3 color(const ray& r, hittable **world) {
   hit_record rec;
 
   if ((*world)->hit(r, 0.0, FLT_MAX, rec)) {
@@ -51,7 +51,7 @@ __global__ void render_init(int max_x, int max_y, curandState *rand_state) {
  * CUDA kernel function
  */
 __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
-		       surface **world, curandState *rand_state) {
+		       hittable **world, curandState *rand_state) {
 
   int i = threadIdx.x + blockIdx.x * blockDim.x;
   int j = threadIdx.y + blockIdx.y * blockDim.y;
@@ -79,11 +79,11 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
 /*
  * CUDA kernel: construct scene's objects
  */
-__global__ void create_world(surface **d_list, surface **d_world, camera **d_camera) {
+__global__ void create_world(hittable **d_list, hittable **d_world, camera **d_camera) {
   if (threadIdx.x == 0 && blockIdx.x == 0) {
     *(d_list)   = new sphere(vec3(0,0,-1), 0.5);
     *(d_list+1) = new sphere(vec3(0,-100.5,-1), 100);
-    *d_world    = new hitable_list(d_list,2);
+    *d_world    = new surface_list(d_list,2);
     *d_camera   = new camera();
   }
 }
@@ -91,7 +91,7 @@ __global__ void create_world(surface **d_list, surface **d_world, camera **d_cam
 /*
  * CUDA kernel: deallocate scene's objects
  */
-__global__ void free_world(surface **d_list, surface **d_world, camera **d_camera) {
+__global__ void free_world(hittable **d_list, hittable **d_world, camera **d_camera) {
   delete *(d_list);
   delete *(d_list+1);
   delete *d_world;
@@ -112,7 +112,7 @@ int main() {
   size_t fb_size = num_pixels*sizeof(vec3);
   
   std::cerr << "--------------------------------------------------------------\n\n";
-  std::cerr << "Rendering a " << nx << "x" << ny << " image with"
+  std::cerr << "Rendering a " << nx << "x" << ny << " image with "
 	    << ns << "samples per pixel. \n";
   std::cerr << tx << "x" << ty << " blocks.\n";
 
@@ -125,10 +125,10 @@ int main() {
   checkCudaErrors(cudaMalloc((void **)&d_rand_state, num_pixels*sizeof(curandState)));
   
   // Allocate world of objects and the camera
-  surface **d_list;
-  checkCudaErrors(cudaMalloc((void **)&d_list, 2*sizeof(surface *)));
-  surface **d_world;
-  checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(surface *)));
+  hittable **d_list;
+  checkCudaErrors(cudaMalloc((void **)&d_list, 2*sizeof(hittable *)));
+  hittable **d_world;
+  checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(hittable *)));
   camera **d_camera;
   checkCudaErrors(cudaMalloc((void **)&d_camera, sizeof(camera *)));
   create_world<<<1,1>>>(d_list, d_world, d_camera);
