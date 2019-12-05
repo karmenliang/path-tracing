@@ -19,25 +19,29 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-__device__ vec3 color(const ray& r, hittable **world, curandState *local_rand_state, int depth) {
-  hit_record rec;
+__device__ vec3 color(const ray& r, hittable **world, curandState *local_rand_state) {
 
-  if ((*world)->hit(r, 0.001f, FLT_MAX, rec)) {
-    ray scattered;
-    vec3 attenuation;
-
-    if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered, local_rand_state)){
-      return attenuation*color(scattered, world, local_rand_state, depth+1);
-    }else {
-      return vec3(0, 0, 0);
-    }
-
-  }else {
-      vec3 unit_direction = unit_vector(r.direction());
+  ray cur_ray = r;
+  vec3 cur_attenuation = vec3(1.0,1.0,1.0);
+  for(int i = 0; i < 50; i++) {
+    hit_record rec;
+    if ((*world)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
+      ray scattered;
+      vec3 attenuation;
+      if(rec.mat_ptr->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
+	cur_attenuation *= attenuation;
+	cur_ray = scattered;
+      } else {
+	return vec3(0.0,0.0,0.0);
+      }
+    } else {
+      vec3 unit_direction = unit_vector(cur_ray.direction());
       float t = 0.5f*(unit_direction.y() + 1.0f);
-
-      return (1.0f-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+      vec3 c = (1.0f-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+      return cur_attenuation * c;
+    }
   }
+  return vec3(0.0,0.0,0.0);
 }
 
 /*
@@ -78,7 +82,7 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
     float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
 
     ray r = (*cam)->get_ray(u,v);
-    col += color(r, world, &local_rand_state, 0);
+    col += color(r, world, &local_rand_state);
   }
 
   rand_state[pixel_index] = local_rand_state;
@@ -94,10 +98,11 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
  */
 __global__ void create_world(hittable **d_list, hittable **d_world, camera **d_camera) {
   if (threadIdx.x == 0 && blockIdx.x == 0) {
-    //    *(d_list)   = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
-    *(d_list) = new sphere(vec3(2,0,-1), 0.5, new metal(vec3(0.7, 0.6, 0.5), 0.0));
-    *(d_list+1) = new sphere(vec3(0,-100.5,-1), 100, new matte(vec3(0.5, 0.5, 0.5)));
-    *d_world    = new surface_list(d_list, 2);
+    d_list[0] = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
+    d_list[1] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 1.0));
+    d_list[2] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8), 0.3));
+    d_list[3] = new sphere(vec3(0,-100.5,-1), 100, new matte(vec3(0.5, 0.5, 0.0)));
+    *d_world    = new surface_list(d_list, 4);
     *d_camera   = new camera();
   }
 }
@@ -116,11 +121,11 @@ __global__ void free_world(hittable **d_list, hittable **d_world, camera **d_cam
 
 int main() {
 
-  int nx = 600; // image width
-  int ny = 300;  // image height
+  int nx = 1200; // image width
+  int ny = 600;  // image height
   int tx = 8;    // block width
   int ty = 8;    // block height
-  int ns = 50;  // number of samples
+  int ns = 100;  // number of samples
   
   int num_pixels = nx*ny;
   size_t fb_size = num_pixels*sizeof(vec3);
@@ -140,7 +145,7 @@ int main() {
   
   // Allocate world of objects and the camera
   hittable **d_list;
-  checkCudaErrors(cudaMalloc((void **)&d_list, 2*sizeof(hittable *)));
+  checkCudaErrors(cudaMalloc((void **)&d_list, 4*sizeof(hittable *)));
   hittable **d_world;
   checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(hittable *)));
   camera **d_camera;
