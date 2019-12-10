@@ -294,7 +294,7 @@ trace-cuda: trace-cuda.o
 
 # Run parallel path tracer and output to a jpg file
 run: build
-	$(EXEC) ./trace > out-cuda.ppm
+	$(EXEC) ./trace-cuda > out-cuda.ppm
 	@ppmtojpeg out-cuda.ppm > out-cuda.jpg
 	@echo Wrote to out-cuda.jpg
 

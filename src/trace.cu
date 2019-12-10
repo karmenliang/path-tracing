@@ -98,12 +98,17 @@ __global__ void render(vec3 *fb, int max_x, int max_y, int ns, camera **cam,
  */
 __global__ void create_world(hittable **d_list, hittable **d_world, camera **d_camera) {
   if (threadIdx.x == 0 && blockIdx.x == 0) {
-    d_list[0] = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
-    d_list[1] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 1.0));
-    d_list[2] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8), 0.3));
-    d_list[3] = new sphere(vec3(0,-100.5,-1), 100, new matte(vec3(0.5, 0.5, 0.0)));
-    *d_world    = new surface_list(d_list, 4);
-    *d_camera   = new camera();
+    // ground
+    d_list[0] = new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
+
+    int i = 1;
+    d_list[i++] = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
+    d_list[i++] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 1.0));
+    d_list[i++] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8), 0.3));
+    d_list[i++] = new sphere(vec3(-2, 1, 0), 1.0, new matte(vec3(0.2, 0.6, 0.1)));
+    d_list[i++] = new sphere(vec3(2, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+    *d_world  = new surface_list(d_list, 4);
+    *d_camera = new camera();
   }
 }
 
@@ -133,7 +138,7 @@ int main() {
   std::cerr << "--------------------------------------------------------------\n\n";
   std::cerr << "Rendering a " << nx << "x" << ny << " image with "
 	    << ns << " samples per pixel. \n";
-  std::cerr << tx << "x" << ty << " blocks.\n";
+  std::cerr << "Using " << tx << "x" << ty << " sized blocks.\n";
 
   // Allocate unified memory for frame buffer
   vec3 *fb;
@@ -145,7 +150,7 @@ int main() {
   
   // Allocate world of objects and the camera
   hittable **d_list;
-  checkCudaErrors(cudaMalloc((void **)&d_list, 4*sizeof(hittable *)));
+  checkCudaErrors(cudaMalloc((void **)&d_list, 6*sizeof(hittable *))); // 6 spheres
   hittable **d_world;
   checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(hittable *)));
   camera **d_camera;
