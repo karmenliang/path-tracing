@@ -106,10 +106,10 @@ __global__ void create_world(hittable **d_list, hittable **d_world,
     d_list[i++] = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
     d_list[i++] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 1.0));
     d_list[i++] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8), 0.3));
-    d_list[i++] = new sphere(vec3(-3, 0, -2), 0.5, new matte(vec3(0.2, 0.6, 0.1)));
-    d_list[i++] = new sphere(vec3(3, 0, 2), 0.5, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+    d_list[i++] = new sphere(vec3(-2, 0, -1), 0.5, new matte(vec3(0.2, 0.6, 0.1)));
+    d_list[i++] = new sphere(vec3(2, 0, -1), 0.5, new metal(vec3(0.7, 0.6, 0.5), 0.0));
     *d_world  = new surface_list(d_list, 4);
-    *d_camera = new camera(vec3(4,1,3), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
+    *d_camera = new camera(vec3(4,1,2), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
   }
 }
 
