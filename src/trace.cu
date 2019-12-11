@@ -103,13 +103,12 @@ __global__ void create_world(hittable **d_list, hittable **d_world,
     d_list[0] = new sphere(vec3(0,-100.5,-1), 100, new matte(vec3(0.5, 0.5, 0)));
 
     int i = 1;
-    d_list[i++] = new sphere(vec3(0,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
-    d_list[i++] = new sphere(vec3(1,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 1.0));
+    d_list[i++] = new sphere(vec3(1,0,-1), 0.5, new matte(vec3(0.4, 0.2, 0.1)));
+    d_list[i++] = new sphere(vec3(0,0,-1), 0.5, new metal(vec3(0.8, 0.6, 0.2), 0.5));
     d_list[i++] = new sphere(vec3(-1,0,-1), 0.5, new metal(vec3(0.8, 0.8, 0.8), 0.3));
-    d_list[i++] = new sphere(vec3(-2, 0, -1), 0.5, new matte(vec3(0.2, 0.6, 0.1)));
-    d_list[i++] = new sphere(vec3(2, 0, -1), 0.5, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+
     *d_world  = new surface_list(d_list, 4);
-    *d_camera = new camera(vec3(4,1,2), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
+    *d_camera = new camera(vec3(0,0.5,1), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
   }
 }
 
@@ -131,7 +130,7 @@ int main() {
   int ny = 600;  // image height
   int tx = 8;    // block width
   int ty = 8;    // block height
-  int ns = 100;  // number of samples
+  int ns = 10;   // number of samples
   
   int num_pixels = nx*ny;
   size_t fb_size = num_pixels*sizeof(vec3);
