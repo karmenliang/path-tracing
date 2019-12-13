@@ -3,16 +3,17 @@
  */
 
 #include <iostream>
+#include <ctime>
+#include <math.h>
 #include <float.h>
 
 #include "geometry/surface_list.h"
 #include "geometry/sphere.h"
 #include "material.h"
 #include "camera.h"
-#include "jpeg.h"
 
 /*
- * Determine the color of a point by backward tracing
+ * Determine the color of a point by recursive backward tracing
  */
 vec3 color(const ray& r, surface *world, int depth) {
   hit_record rec;
@@ -45,9 +46,10 @@ surface *random_scene(int n) {
   surface **list = new surface*[n+1];
   list[0] =  new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
   int i = 1;
-
-  for (int a = -3; a < 4; a++) {
-    for (int b = -3; b < 4; b++) {
+  int n_half = sqrt(n);
+  
+  for (int a = -n_half; a < n_half+1; a++) {
+    for (int b = -n_half; b < n_half+1; b++) {
 
       float choose_mat = random_double();
       vec3 center(a+0.9*random_double(),0.2,b+0.9*random_double());
@@ -81,21 +83,24 @@ surface *random_scene(int n) {
 }
 
 int main() {
-  int nx = 600; // image width
-  int ny = 300; // image height
-  int ns = 150; // number of samples
+  int nx = 1200; // image width
+  int ny = 600; // image height
+  int ns = 100; // number of samples
   std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
-  camera cam(vec3(6,1,3), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
+  camera cam(vec3(5,1,2), vec3(0,0,-1), vec3(0,1,0), 60, float(nx)/float(ny));
   surface *world = random_scene(50);
-
+  
+  // timing render execution time
+  clock_t elapsed;
+  elapsed = clock();
+  
   for (int j = ny-1; j >= 0; j--) {
 
     for (int i = 0; i < nx; i++) {
 
       vec3 col(0, 0, 0);
 
-      // Anti-aliasing
       for (int s = 0; s < ns; s++) {
 	float u = float(i + random_double()) / float(nx);
 	float v = float(j + random_double()) / float(ny);
@@ -115,4 +120,7 @@ int main() {
     }
   }
 
+  clock_t ms = clock() - elapsed;
+  
+  std::cerr << "PERFORMANCE: " << (float(ms)/CLOCKS_PER_SEC)*1000 << " ms\n";
 }
