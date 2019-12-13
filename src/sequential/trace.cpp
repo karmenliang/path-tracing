@@ -43,10 +43,14 @@ vec3 color(const ray& r, surface *world, int depth) {
  */
 surface *random_scene(int n) {
 
-  surface **list = new surface*[n+1];
-  list[0] =  new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
-  int i = 1;
-  int n_half = sqrt(n);
+  surface **list = new surface*[n+3];
+
+  int i = 0;
+  list[i++] =  new sphere(vec3(0,-1000,0), 1000, new matte(vec3(0.5, 0.5, 0.5)));
+  list[i++] = new sphere(vec3(-2, 1, 0), 1.0, new matte(vec3(0.4, 0.2, 0.1)));
+  list[i++] = new sphere(vec3(2, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
+
+  int n_half = sqrt(n)/2;
   
   for (int a = -n_half; a < n_half+1; a++) {
     for (int b = -n_half; b < n_half+1; b++) {
@@ -76,15 +80,12 @@ surface *random_scene(int n) {
     }
   }
 
-  list[i++] = new sphere(vec3(-2, 1, 0), 1.0, new matte(vec3(0.4, 0.2, 0.1)));
-  list[i++] = new sphere(vec3(2, 1, 0), 1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
-
   return new surface_list(list,i);
 }
 
 int main() {
-  int nx = 1200; // image width
-  int ny = 600; // image height
+  int nx = 600; // image width
+  int ny = 300; // image height
   int ns = 100; // number of samples
   std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
