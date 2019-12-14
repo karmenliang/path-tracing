@@ -5,6 +5,7 @@
 
 class material;
 
+// Args for material to determine how rays interact with surfaces
 struct hit_record
 {
     float t;
@@ -13,7 +14,7 @@ struct hit_record
     material *mat_ptr;
 };
 
-class hitable  {
+class hittable  {
     public:
         __device__ virtual bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const = 0;
 };
