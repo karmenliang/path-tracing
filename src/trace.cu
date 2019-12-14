@@ -141,7 +141,7 @@
          *rand_state = local_rand_state;
          *d_world  = new surface_list(d_list, 7*7+1+2);
  
-         vec3 lookfrom(13, 2, 3);
+         vec3 lookfrom(7, 2, 1);
          vec3 lookat(0, 0, 0);
          float dist_to_focus = 10.0; (lookfrom-lookat).length();
          float aperture = 0.1;
@@ -149,7 +149,7 @@
          *d_camera   = new camera(lookfrom,
                                   lookat,
                                   vec3(0, 1, 0),
-                                  30.0,
+                                  60.0,
                                   float(nx)/float(ny),
                                   aperture,
                                   dist_to_focus);
