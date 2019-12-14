@@ -5,9 +5,9 @@ Implementation based on Peter Shirley's [Ray Tracing in One Weekend](https://ray
 
 ### To do:
 
-- [ ] Construct large input scene to use for all testing
-- [ ] Collect benchmark performance data from sequential program
-- [ ] Collect performance data from 4 different block size configurations
+- [x] Construct large input scene to use for all testing
+- [x] Collect benchmark performance data from sequential program
+- [x] Collect performance data from 4 different block size configurations
 
 ### Extensions:
 

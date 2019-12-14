@@ -167,13 +167,15 @@
      delete *d_world;
      delete *d_camera;
  }
- 
+
+/**************** MAIN ************************************************************/
+
  int main() {
      int nx = 600;  // image width
      int ny = 300;  // image height
-     int ns = 10;   // samples per pixel
-     int tx = 8;    // block width
-     int ty = 8;    // block height
+     int ns = 50;   // samples per pixel
+     int tx = 32;    // block width
+     int ty = 32;    // block height
  
      std::cerr << "--------------------------------------------------------------\n\n";
      std::cerr << "Rendering a " << nx << "x" << ny << " image with "
