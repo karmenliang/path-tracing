@@ -11,7 +11,10 @@ class surface_list: public hittable  {
  public:
   __device__ surface_list() {}
 
-  __device__ surface_list(hittable **l, int n) {list = l; list_size = n; }
+  __device__ surface_list(hittable **l, int n) {
+      list = l; 
+      list_size = n; 
+    }
 
   __device__ virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
 
@@ -21,7 +24,7 @@ class surface_list: public hittable  {
 };
 
 __device__ bool surface_list::hit(const ray& r, float t_min, float t_max,
-				  hit_record& rec) const {
+				                          hit_record& rec) const {
 
   hit_record temp_rec;
   bool hit_anything = false;

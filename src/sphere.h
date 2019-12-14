@@ -22,7 +22,7 @@ class sphere: public hittable  {
 };
 
 __device__ bool sphere::hit(const ray& r, float t_min, float t_max,
-			    hit_record& rec) const {
+			                      hit_record& rec) const {
   
   vec3 oc = r.origin() - center;
   float a = dot(r.direction(), r.direction());
@@ -31,7 +31,7 @@ __device__ bool sphere::hit(const ray& r, float t_min, float t_max,
   float discriminant = b*b - a*c;
 
   // If discriminant > 0, there is a hit
-  if (discriminant > 0) {
+  if (discriminant > 0.0f) {
 
     // First root
     float temp = (-b - sqrt(discriminant))/a;
