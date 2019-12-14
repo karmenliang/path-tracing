@@ -45,6 +45,7 @@ public:
 
     }
 
+    // shoot a ray from the camera
     __device__ ray get_ray(float s, float t, curandState *local_rand_state) {
         vec3 rd = lens_radius*random_in_unit_disk(local_rand_state);
         vec3 offset = u * rd.x() + v * rd.y();

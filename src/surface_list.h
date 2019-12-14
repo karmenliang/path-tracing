@@ -18,7 +18,7 @@ class surface_list: public hittable {
         __device__ virtual bool hit(const ray& r, float tmin, 
                                     float tmax, hit_record& rec) const;
         
-        hitable **list;
+        hittable **list;
         
         int list_size;
 };

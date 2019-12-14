@@ -9,6 +9,7 @@
  // CUDA libraries
  #include <cuda_runtime.h>
  #include <curand_kernel.h>
+ #include <helper_cuda.h>
 
  #include "vec3.h"
  #include "ray.h"
@@ -16,19 +17,6 @@
  #include "surface_list.h"
  #include "camera.h"
  #include "material.h"
- 
- // limited version of checkCudaErrors from helper_cuda.h in CUDA examples
- #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
- 
- void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
-     if (result) {
-         std::cerr << "CUDA error = " << static_cast<unsigned int>(result) << " at " <<
-             file << ":" << line << " '" << func << "' \n";
-         // Make sure we call CUDA Device Reset before exiting
-         cudaDeviceReset();
-         exit(99);
-     }
- }
  
  __device__ vec3 color(const ray& r, hittable**world, curandState *local_rand_state) {
      ray cur_ray = r;
@@ -79,7 +67,7 @@
      if((i >= max_x) || (j >= max_y)) return;
      int pixel_index = j*max_x + i;
 
-     //Each thread gets same seed, a different sequence number, no offset
+     // each thread gets same seed, a different sequence number, no offset
      curand_init(1984, pixel_index, 0, &rand_state[pixel_index]);
  }
 
@@ -94,6 +82,8 @@
      if((i >= max_x) || (j >= max_y)) return;
 
      int pixel_index = j*max_x + i;
+
+     // local copy of random state
      curandState local_rand_state = rand_state[pixel_index];
      vec3 col(0, 0, 0);
 
@@ -128,32 +118,28 @@
 
          int i = 1;
 
-         for(int a = -11; a < 11; a++) {
-             for(int b = -11; b < 11; b++) {
+         for(int a = -3; a < 4; a++) {
+             for(int b = -3; b < 4; b++) {
 
                  float choose_mat = RND;
                  vec3 center(a+RND, 0.2, b+RND);
 
-                 if(choose_mat < 0.8f) {
+                 if(choose_mat < 0.5f) {
                      d_list[i++] = new sphere(center, 0.2,
                                               new matte(vec3(RND*RND, RND*RND, RND*RND)));
                  }
-                 else if(choose_mat < 0.95f) {
+                 else {
                      d_list[i++] = new sphere(center, 0.2,
                                               new metal(vec3(0.5f*(1.0f+RND), 0.5f*(1.0f+RND), 0.5f*(1.0f+RND)), 0.5f*RND));
-                 }
-                 else {
-                     d_list[i++] = new sphere(center, 0.2, new dielectric(1.5));
                  }
              }
          }
 
-         d_list[i++] = new sphere(vec3(0, 1, 0),  1.0, new dielectric(1.5));
          d_list[i++] = new sphere(vec3(-4, 1, 0), 1.0, new matte(vec3(0.4, 0.2, 0.1)));
          d_list[i++] = new sphere(vec3(4, 1, 0),  1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
          
          *rand_state = local_rand_state;
-         *d_world  = new surface_list(d_list, 22*22+1+3);
+         *d_world  = new surface_list(d_list, 7*7+1+2);
  
          vec3 lookfrom(13, 2, 3);
          vec3 lookat(0, 0, 0);
@@ -174,7 +160,7 @@
   * CUDA kernel: deallocate scene's objects
   */
  __global__ void free_world(hittable**d_list, hittable**d_world, camera **d_camera) {
-     for(int i=0; i < 22*22+1+3; i++) {
+     for(int i=0; i < 7*7+1+2; i++) {
          delete ((sphere *)d_list[i])->mat_ptr;
          delete d_list[i];
      }
@@ -214,7 +200,7 @@
  
      // allocate world of objects and the camera
      hittable**d_list;
-     int num_spheres = 22*22+1+3;
+     int num_spheres = 7*7+1+2;
      checkCudaErrors(cudaMalloc((void **)&d_list, num_spheres*sizeof(hittable*)));
      hittable**d_world;
      checkCudaErrors(cudaMalloc((void **)&d_world, sizeof(hittable*)));
